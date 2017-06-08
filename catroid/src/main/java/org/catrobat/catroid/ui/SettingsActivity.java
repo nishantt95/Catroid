@@ -34,6 +34,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.util.Log;
 import android.view.MenuItem;
 
 import org.catrobat.catroid.BuildConfig;
@@ -41,6 +42,7 @@ import org.catrobat.catroid.R;
 import org.catrobat.catroid.common.DroneConfigPreference;
 import org.catrobat.catroid.devices.mindstorms.ev3.sensors.EV3Sensor;
 import org.catrobat.catroid.devices.mindstorms.nxt.sensors.NXTSensor;
+import org.catrobat.catroid.utils.CrashReporter;
 import org.catrobat.catroid.utils.SnackbarUtil;
 
 public class SettingsActivity extends PreferenceActivity {
@@ -85,6 +87,8 @@ public class SettingsActivity extends PreferenceActivity {
 
 	public static final String SETTINGS_CRASH_REPORTS = "setting_enable_crash_reports";
 
+	private static final String TAG = SettingsActivity.class.getSimpleName();
+
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +96,7 @@ public class SettingsActivity extends PreferenceActivity {
 
 		addPreferencesFromResource(R.xml.preferences);
 
+		setAnonymousCrashReportPreference();
 		setNXTSensors();
 		setEV3Sensors();
 		setDronePreferences();
@@ -143,6 +148,18 @@ public class SettingsActivity extends PreferenceActivity {
 			nfcPreference.setEnabled(false);
 			screen.removePreference(nfcPreference);
 		}
+	}
+
+	@SuppressWarnings("deprecation")
+	private void setAnonymousCrashReportPreference() {
+		CheckBoxPreference reportCheckBoxPreference = (CheckBoxPreference) findPreference(SETTINGS_CRASH_REPORTS);
+		reportCheckBoxPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object isChecked) {
+				setAutoCrashReportingEnabled(getApplicationContext(), (Boolean) isChecked);
+				return true;
+			}
+		});
 	}
 
 	@SuppressWarnings("deprecation")
@@ -368,6 +385,14 @@ public class SettingsActivity extends PreferenceActivity {
 		SharedPreferences.Editor editor = getSharedPreferences(context).edit();
 		editor.putBoolean(SETTINGS_CRASH_REPORTS, value);
 		editor.commit();
+
+		if (!value) {
+			CrashReporter.disableCrashlytics();
+			Log.e(TAG, "Crashlytics Disabled");
+		} else {
+			CrashReporter.initialize(context);
+			Log.e(TAG, "Crashlytics Enabled");
+		}
 	}
 
 	private static void setBooleanSharedPreference(boolean value, String settingsString, Context context) {
