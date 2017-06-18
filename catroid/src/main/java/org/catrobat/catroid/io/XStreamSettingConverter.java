@@ -33,6 +33,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.mapper.Mapper;
 
 import org.catrobat.catroid.content.Setting;
+import org.catrobat.catroid.utils.CrashReporter;
 
 public class XStreamSettingConverter extends ReflectionConverter {
 
@@ -64,6 +65,7 @@ public class XStreamSettingConverter extends ReflectionConverter {
 			return super.doUnmarshal(setting, reader, context);
 		} catch (ClassNotFoundException exception) {
 			Log.e(TAG, "Setting class not found : " + result.toString(), exception);
+			CrashReporter.logException(exception);
 		}
 		return super.doUnmarshal(result, reader, context);
 	}
